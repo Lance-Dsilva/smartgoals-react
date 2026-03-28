@@ -1,0 +1,95 @@
+{
+  "generated_at": "2025-03-27T00:00:00Z",
+  "model_version": "v1.0",
+  "source": "ml_nightly",
+  "targets": [
+    { "entity_type": "store",      "entity_id": "S001",          "metric": "Revenue",                      "recommended_target": 133525 },
+    { "entity_type": "store",      "entity_id": "S001",          "metric": "Operating Cost",               "recommended_target": 86767  },
+    { "entity_type": "store",      "entity_id": "S001",          "metric": "Footfall",                     "recommended_target": 15085  },
+    { "entity_type": "store",      "entity_id": "S001",          "metric": "Units Sold",                   "recommended_target": 6762   },
+    { "entity_type": "store",      "entity_id": "S001",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.44   },
+    { "entity_type": "store",      "entity_id": "S001",          "metric": "Expense",                      "recommended_target": 53833  },
+
+    { "entity_type": "store",      "entity_id": "S002",          "metric": "Revenue",                      "recommended_target": 89600  },
+    { "entity_type": "store",      "entity_id": "S002",          "metric": "Operating Cost",               "recommended_target": 44967  },
+    { "entity_type": "store",      "entity_id": "S002",          "metric": "Footfall",                     "recommended_target": 9030   },
+    { "entity_type": "store",      "entity_id": "S002",          "metric": "Units Sold",                   "recommended_target": 3378   },
+    { "entity_type": "store",      "entity_id": "S002",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.10   },
+    { "entity_type": "store",      "entity_id": "S002",          "metric": "Expense",                      "recommended_target": 30083  },
+
+    { "entity_type": "store",      "entity_id": "S003",          "metric": "Revenue",                      "recommended_target": 96075  },
+    { "entity_type": "store",      "entity_id": "S003",          "metric": "Operating Cost",               "recommended_target": 48767  },
+    { "entity_type": "store",      "entity_id": "S003",          "metric": "Footfall",                     "recommended_target": 10325  },
+    { "entity_type": "store",      "entity_id": "S003",          "metric": "Units Sold",                   "recommended_target": 3990   },
+    { "entity_type": "store",      "entity_id": "S003",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.31   },
+    { "entity_type": "store",      "entity_id": "S003",          "metric": "Expense",                      "recommended_target": 33883  },
+
+    { "entity_type": "store",      "entity_id": "S004",          "metric": "Revenue",                      "recommended_target": 110250 },
+    { "entity_type": "store",      "entity_id": "S004",          "metric": "Operating Cost",               "recommended_target": 57633  },
+    { "entity_type": "store",      "entity_id": "S004",          "metric": "Footfall",                     "recommended_target": 12705  },
+    { "entity_type": "store",      "entity_id": "S004",          "metric": "Units Sold",                   "recommended_target": 5075   },
+    { "entity_type": "store",      "entity_id": "S004",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.55   },
+    { "entity_type": "store",      "entity_id": "S004",          "metric": "Expense",                      "recommended_target": 41483  },
+
+    { "entity_type": "store",      "entity_id": "S005",          "metric": "Revenue",                      "recommended_target": 124250 },
+    { "entity_type": "store",      "entity_id": "S005",          "metric": "Operating Cost",               "recommended_target": 66817  },
+    { "entity_type": "store",      "entity_id": "S005",          "metric": "Footfall",                     "recommended_target": 14245  },
+    { "entity_type": "store",      "entity_id": "S005",          "metric": "Units Sold",                   "recommended_target": 5810   },
+    { "entity_type": "store",      "entity_id": "S005",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.34   },
+    { "entity_type": "store",      "entity_id": "S005",          "metric": "Expense",                      "recommended_target": 48133  },
+
+    { "entity_type": "department", "entity_id": "Electronics",   "metric": "Revenue",                      "recommended_target": 47600  },
+    { "entity_type": "department", "entity_id": "Electronics",   "metric": "Operating Cost",               "recommended_target": 16941  },
+    { "entity_type": "department", "entity_id": "Electronics",   "metric": "Footfall",                     "recommended_target": 4445   },
+
+    { "entity_type": "department", "entity_id": "Apparel",       "metric": "Revenue",                      "recommended_target": 29400  },
+    { "entity_type": "department", "entity_id": "Apparel",       "metric": "Operating Cost",               "recommended_target": 11400  },
+    { "entity_type": "department", "entity_id": "Apparel",       "metric": "Footfall",                     "recommended_target": 3710   },
+
+    { "entity_type": "department", "entity_id": "Grocery",       "metric": "Revenue",                      "recommended_target": 23450  },
+    { "entity_type": "department", "entity_id": "Grocery",       "metric": "Operating Cost",               "recommended_target": 8550   },
+    { "entity_type": "department", "entity_id": "Grocery",       "metric": "Footfall",                     "recommended_target": 5250   },
+
+    { "entity_type": "department", "entity_id": "Home & Living", "metric": "Revenue",                      "recommended_target": 15750  },
+    { "entity_type": "department", "entity_id": "Home & Living", "metric": "Operating Cost",               "recommended_target": 6650   },
+    { "entity_type": "department", "entity_id": "Home & Living", "metric": "Footfall",                     "recommended_target": 1575   },
+
+    { "entity_type": "department", "entity_id": "Sports",        "metric": "Revenue",                      "recommended_target": 12775  },
+    { "entity_type": "department", "entity_id": "Sports",        "metric": "Operating Cost",               "recommended_target": 5700   },
+    { "entity_type": "department", "entity_id": "Sports",        "metric": "Footfall",                     "recommended_target": 1925   },
+
+    { "entity_type": "department", "entity_id": "Beauty",        "metric": "Revenue",                      "recommended_target": 6475   },
+    { "entity_type": "department", "entity_id": "Beauty",        "metric": "Operating Cost",               "recommended_target": 4750   },
+    { "entity_type": "department", "entity_id": "Beauty",        "metric": "Footfall",                     "recommended_target": 2310   },
+
+    { "entity_type": "employee",   "entity_id": "E001",          "metric": "Units Sold",                   "recommended_target": 2187   },
+    { "entity_type": "employee",   "entity_id": "E001",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.73   },
+
+    { "entity_type": "employee",   "entity_id": "E002",          "metric": "Units Sold",                   "recommended_target": 1890   },
+    { "entity_type": "employee",   "entity_id": "E002",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.41   },
+
+    { "entity_type": "employee",   "entity_id": "E003",          "metric": "Units Sold",                   "recommended_target": 1575   },
+    { "entity_type": "employee",   "entity_id": "E003",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.20   },
+
+    { "entity_type": "employee",   "entity_id": "E004",          "metric": "Units Sold",                   "recommended_target": 1260   },
+    { "entity_type": "employee",   "entity_id": "E004",          "metric": "Customer Satisfaction Score",  "recommended_target": 3.99   },
+
+    { "entity_type": "employee",   "entity_id": "E005",          "metric": "Units Sold",                   "recommended_target": 1680   },
+    { "entity_type": "employee",   "entity_id": "E005",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.52   },
+
+    { "entity_type": "employee",   "entity_id": "E006",          "metric": "Units Sold",                   "recommended_target": 1470   },
+    { "entity_type": "employee",   "entity_id": "E006",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.31   },
+
+    { "entity_type": "employee",   "entity_id": "E007",          "metric": "Units Sold",                   "recommended_target": 1785   },
+    { "entity_type": "employee",   "entity_id": "E007",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.62   },
+
+    { "entity_type": "employee",   "entity_id": "E008",          "metric": "Units Sold",                   "recommended_target": 2100   },
+    { "entity_type": "employee",   "entity_id": "E008",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.41   },
+
+    { "entity_type": "employee",   "entity_id": "E009",          "metric": "Units Sold",                   "recommended_target": 1995   },
+    { "entity_type": "employee",   "entity_id": "E009",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.83   },
+
+    { "entity_type": "employee",   "entity_id": "E010",          "metric": "Units Sold",                   "recommended_target": 1365   },
+    { "entity_type": "employee",   "entity_id": "E010",          "metric": "Customer Satisfaction Score",  "recommended_target": 4.10   }
+  ]
+}

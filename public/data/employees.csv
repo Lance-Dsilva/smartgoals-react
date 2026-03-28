@@ -1,0 +1,11 @@
+employee_id,name,store_id,department,role
+E001,Sarah Kim,S001,Management,Store Manager
+E002,Mike Chen,S001,Electronics,Electronics Lead
+E003,Amy Rodriguez,S001,Apparel,Apparel Lead
+E004,Tom Brown,S002,Management,Store Manager
+E005,Lisa Park,S002,Grocery,Grocery Lead
+E006,James Wilson,S003,Management,Store Manager
+E007,Maria Garcia,S003,Electronics,Electronics Lead
+E008,David Lee,S004,Management,Store Manager
+E009,Jennifer Taylor,S004,Apparel,Apparel Lead
+E010,Robert Johnson,S005,Management,Store Manager

@@ -1,0 +1,32 @@
+# Databricks Apps configuration template
+# Copy this to app.yaml and fill in your values.
+# app.yaml is gitignored — never commit it with real keys.
+#
+# Recommended: use secretRef instead of plaintext values in production.
+
+command: ["node", "server.js"]
+
+env:
+  - name: OPENAI_API_KEY
+    value: "sk-proj-YOUR_KEY_HERE"
+    # Production — use Databricks Secrets:
+    # valueFrom:
+    #   secretRef:
+    #     scope: "smartgoals-secrets"
+    #     key: "openai-api-key"
+
+  - name: OPENAI_MODEL
+    value: "gpt-4o-mini"
+
+  - name: DATABRICKS_ENDPOINT_URL
+    value: ""   # e.g. https://<workspace>/serving-endpoints/<name>/invocations
+
+  - name: DATABRICKS_TOKEN
+    value: ""
+    # valueFrom:
+    #   secretRef:
+    #     scope: "smartgoals-secrets"
+    #     key: "databricks-pat"
+
+  - name: PORT
+    value: "8000"

@@ -1,0 +1,69 @@
+entity_type,entity_id,entity_name,store_id,metric,jan,feb,mar,avg_3m
+store,S001,Downtown Flagship,S001,Revenue,128000,122500,131000,127167
+store,S001,Downtown Flagship,S001,Operating Cost,92000,89500,92500,91333
+store,S001,Downtown Flagship,S001,Footfall,14200,13800,15100,14367
+store,S001,Downtown Flagship,S001,Units Sold,6400,6100,6820,6440
+store,S001,Downtown Flagship,S001,Customer Satisfaction Score,4.2,4.1,4.4,4.23
+store,S001,Downtown Flagship,S001,Expense,58000,55000,57000,56667
+store,S002,Lincoln Park,S002,Revenue,83000,85000,88000,85333
+store,S002,Lincoln Park,S002,Operating Cost,48000,45000,49000,47333
+store,S002,Lincoln Park,S002,Footfall,8500,8200,9100,8600
+store,S002,Lincoln Park,S002,Units Sold,3200,3050,3400,3217
+store,S002,Lincoln Park,S002,Customer Satisfaction Score,3.8,3.9,4.0,3.90
+store,S002,Lincoln Park,S002,Expense,32000,30000,33000,31667
+store,S003,Wicker Park,S003,Revenue,91000,88500,95000,91500
+store,S003,Wicker Park,S003,Operating Cost,52000,49000,53000,51333
+store,S003,Wicker Park,S003,Footfall,9800,9500,10200,9833
+store,S003,Wicker Park,S003,Units Sold,3800,3600,4000,3800
+store,S003,Wicker Park,S003,Customer Satisfaction Score,4.0,4.1,4.2,4.10
+store,S003,Wicker Park,S003,Expense,36000,34000,37000,35667
+store,S004,Hyde Park,S004,Revenue,105000,98000,112000,105000
+store,S004,Hyde Park,S004,Operating Cost,61000,58000,63000,60667
+store,S004,Hyde Park,S004,Footfall,12000,11500,12800,12100
+store,S004,Hyde Park,S004,Units Sold,4800,4600,5100,4833
+store,S004,Hyde Park,S004,Customer Satisfaction Score,4.3,4.2,4.5,4.33
+store,S004,Hyde Park,S004,Expense,44000,42000,45000,43667
+store,S005,Naperville,S005,Revenue,118000,115000,122000,118333
+store,S005,Naperville,S005,Operating Cost,71000,68000,72000,70333
+store,S005,Naperville,S005,Footfall,13500,13000,14200,13567
+store,S005,Naperville,S005,Units Sold,5500,5300,5800,5533
+store,S005,Naperville,S005,Customer Satisfaction Score,4.1,4.0,4.3,4.13
+store,S005,Naperville,S005,Expense,51000,49000,52000,50667
+department,Electronics,Electronics,,Revenue,45000,43000,48000,45333
+department,Electronics,Electronics,,Operating Cost,18000,17000,18500,17833
+department,Electronics,Electronics,,Footfall,4200,4000,4500,4233
+department,Apparel,Apparel,,Revenue,28000,26000,30000,28000
+department,Apparel,Apparel,,Operating Cost,12000,11500,12500,12000
+department,Apparel,Apparel,,Footfall,3500,3300,3800,3533
+department,Grocery,Grocery,,Revenue,22000,21000,24000,22333
+department,Grocery,Grocery,,Operating Cost,9000,8500,9500,9000
+department,Grocery,Grocery,,Footfall,5000,4800,5200,5000
+department,Home & Living,Home & Living,,Revenue,15000,14000,16000,15000
+department,Home & Living,Home & Living,,Operating Cost,7000,6500,7500,7000
+department,Home & Living,Home & Living,,Footfall,1500,1400,1600,1500
+department,Sports,Sports,,Revenue,12000,11500,13000,12167
+department,Sports,Sports,,Operating Cost,6000,5500,6500,6000
+department,Sports,Sports,,Footfall,1800,1700,2000,1833
+department,Beauty,Beauty,,Revenue,6000,5500,7000,6167
+department,Beauty,Beauty,,Operating Cost,5000,4500,5500,5000
+department,Beauty,Beauty,,Footfall,2200,2100,2300,2200
+employee,E001,Sarah Kim,S001,Units Sold,2100,1950,2200,2083
+employee,E001,Sarah Kim,S001,Customer Satisfaction Score,4.5,4.4,4.6,4.50
+employee,E002,Mike Chen,S001,Units Sold,1800,1700,1900,1800
+employee,E002,Mike Chen,S001,Customer Satisfaction Score,4.2,4.1,4.3,4.20
+employee,E003,Amy Rodriguez,S001,Units Sold,1500,1400,1600,1500
+employee,E003,Amy Rodriguez,S001,Customer Satisfaction Score,4.0,3.9,4.1,4.00
+employee,E004,Tom Brown,S002,Units Sold,1200,1100,1300,1200
+employee,E004,Tom Brown,S002,Customer Satisfaction Score,3.8,3.7,3.9,3.80
+employee,E005,Lisa Park,S002,Units Sold,1600,1500,1700,1600
+employee,E005,Lisa Park,S002,Customer Satisfaction Score,4.3,4.2,4.4,4.30
+employee,E006,James Wilson,S003,Units Sold,1400,1300,1500,1400
+employee,E006,James Wilson,S003,Customer Satisfaction Score,4.1,4.0,4.2,4.10
+employee,E007,Maria Garcia,S003,Units Sold,1700,1600,1800,1700
+employee,E007,Maria Garcia,S003,Customer Satisfaction Score,4.4,4.3,4.5,4.40
+employee,E008,David Lee,S004,Units Sold,2000,1900,2100,2000
+employee,E008,David Lee,S004,Customer Satisfaction Score,4.2,4.1,4.3,4.20
+employee,E009,Jennifer Taylor,S004,Units Sold,1900,1800,2000,1900
+employee,E009,Jennifer Taylor,S004,Customer Satisfaction Score,4.6,4.5,4.7,4.60
+employee,E010,Robert Johnson,S005,Units Sold,1300,1200,1400,1300
+employee,E010,Robert Johnson,S005,Customer Satisfaction Score,3.9,3.8,4.0,3.90

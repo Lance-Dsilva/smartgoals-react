@@ -1,0 +1,6 @@
+store_id,name,city,region,size_sqft,manager_name
+S001,Downtown Flagship,Chicago,Midwest,12000,Sarah Kim
+S002,Lincoln Park,Chicago,Midwest,8500,Mike Chen
+S003,Wicker Park,Chicago,Midwest,7200,Amy Rodriguez
+S004,Hyde Park,Chicago,Midwest,9100,Tom Brown
+S005,Naperville,Naperville,Midwest,11000,Lisa Park
