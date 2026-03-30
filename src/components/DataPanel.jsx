@@ -73,16 +73,16 @@ const FIXED_OPS_METRICS = [
   { label: 'Fixed Gross Profit (%)', field: 'fixed_gp_pct', type: 'pct', bold: true },
 ]
 
-function MetricRow({ metric, marRow, aprRow, mayRow }) {
+function MetricRow({ metric, aprRow, mayRow, junRow }) {
   function getVal(row) {
     if (!row) return null
     const v = parseFloat(row[metric.field])
     return isNaN(v) ? null : v
   }
 
-  const marVal = getVal(marRow)
   const aprVal = getVal(aprRow)
   const mayVal = getVal(mayRow)
+  const junVal = getVal(junRow)
 
   function display(val) {
     if (val == null) return <span className="text-gray-300">—</span>
@@ -110,16 +110,16 @@ function MetricRow({ metric, marRow, aprRow, mayRow }) {
         )}
         {metric.label}
       </div>
-      {/* March */}
-      <div className="px-3 py-2.5 text-right tabular-nums">{display(marVal)}</div>
       {/* April */}
       <div className="px-3 py-2.5 text-right tabular-nums">{display(aprVal)}</div>
-      {/* Apr vs Mar */}
-      <div className="px-3 py-2.5 text-right">{badge(aprVal, marVal)}</div>
       {/* May */}
       <div className="px-3 py-2.5 text-right tabular-nums">{display(mayVal)}</div>
       {/* May vs Apr */}
       <div className="px-3 py-2.5 text-right">{badge(mayVal, aprVal)}</div>
+      {/* June */}
+      <div className="px-3 py-2.5 text-right tabular-nums">{display(junVal)}</div>
+      {/* Jun vs May */}
+      <div className="px-3 py-2.5 text-right">{badge(junVal, mayVal)}</div>
     </div>
   )
 }
@@ -129,11 +129,11 @@ function TableHeader() {
     <div className="grid bg-[#4a5568] text-white rounded-t-xl overflow-hidden"
       style={{ gridTemplateColumns: '2.2fr 1fr 1fr 1fr 1fr 1fr' }}>
       <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider">Metric</div>
-      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">{fmtMonth('2026-03-01')}</div>
       <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">{fmtMonth('2026-04-01')} Projection</div>
-      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">Apr vs Mar</div>
       <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">{fmtMonth('2026-05-01')} Projection</div>
       <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">May vs Apr</div>
+      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">{fmtMonth('2026-06-01')} Projection</div>
+      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">Jun vs May</div>
     </div>
   )
 }
@@ -176,12 +176,12 @@ export default function DataPanel() {
     return map
   }, [data, selectedEnterprise, selectedStore])
 
-  const marRow = rowByMonth['2026-03-01'] ?? null
   const aprRow = rowByMonth['2026-04-01'] ?? null
   const mayRow = rowByMonth['2026-05-01'] ?? null
-  const storeInfo = marRow ?? aprRow ?? mayRow
+  const junRow = rowByMonth['2026-06-01'] ?? null
+  const storeInfo = aprRow ?? mayRow ?? junRow
 
-  const hasData = selectedEnterprise && selectedStore && (marRow || aprRow || mayRow)
+  const hasData = selectedEnterprise && selectedStore && (aprRow || mayRow || junRow)
 
   if (loading) {
     return (
@@ -286,7 +286,7 @@ export default function DataPanel() {
                 <TableHeader />
                 <div className="bg-white">
                   {NET_SUMMARY_METRICS.map(m => (
-                    <MetricRow key={m.field} metric={m} marRow={marRow} aprRow={aprRow} mayRow={mayRow} />
+                    <MetricRow key={m.field} metric={m} aprRow={aprRow} mayRow={mayRow} junRow={junRow} />
                   ))}
                 </div>
               </div>
@@ -306,7 +306,7 @@ export default function DataPanel() {
                 </div>
                 <div className="bg-white">
                   {FIXED_OPS_METRICS.map(m => (
-                    <MetricRow key={m.field} metric={m} marRow={marRow} aprRow={aprRow} mayRow={mayRow} />
+                    <MetricRow key={m.field} metric={m} aprRow={aprRow} mayRow={mayRow} junRow={junRow} />
                   ))}
                 </div>
               </div>

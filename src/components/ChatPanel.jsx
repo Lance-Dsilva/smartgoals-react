@@ -33,7 +33,7 @@ const CATEGORY_METRICS = {
   ],
 }
 
-const MONTH_PILLS = ['2026-03-01', '2026-04-01', '2026-05-01']
+const MONTH_PILLS = ['2026-04-01', '2026-05-01', '2026-06-01']
 
 // Convert "2026-04-01" → "April 2026"
 function fmtMonth(dateStr) {
@@ -571,8 +571,8 @@ export default function ChatPanel({ onGoalCreated }) {
 
     // Find previous month's value for comparison
     const prevMonthMap = {
-      '2026-04-01': '2026-03-01',
       '2026-05-01': '2026-04-01',
+      '2026-06-01': '2026-05-01',
     }
     const prevMonth = prevMonthMap[selectedMonth] ?? null
     const prevRow = prevMonth
