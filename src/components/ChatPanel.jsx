@@ -1,92 +1,78 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-// API key is held server-side in server.js — never sent to the browser
+// ── CSV loader ────────────────────────────────────────────────────────────────
 
-// ── Static mock data ──────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n')
+  const headers = lines[0].split(',').map(h => h.trim())
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const values = line.split(',').map(v => v.trim())
+    return Object.fromEntries(headers.map((h, i) => [h, values[i] ?? '']))
+  })
+}
 
-const SIMILAR_STORES = [
-  { id: '039', name: 'Lincoln Park', location: 'Chicago, IL', value: '$83,000' },
-  { id: '047', name: 'Wicker Park',  location: 'Chicago, IL', value: '$88,000' },
-  { id: '051', name: 'Hyde Park',    location: 'Chicago, IL', value: '$85,000' },
-]
+// ── Category → metric config ──────────────────────────────────────────────────
 
-// ── Pill options per scope type ───────────────────────────────────────────────
+const CATEGORY_PILLS = ['Service', 'Body', 'Parts']
 
-const METRIC_PILLS = ['Revenue', 'Operating Cost', 'Footfall', 'Units Sold', 'Customer Satisfaction']
+const CATEGORY_METRICS = {
+  Service: [
+    { label: 'Service Sales',          field: 'service_sales',         type: 'dollar' },
+    { label: 'Service Gross Profit',   field: 'service_gross_profit',  type: 'dollar' },
+    { label: 'Service GP %',           field: 'service_gp_pct',        type: 'pct'    },
+  ],
+  Body: [
+    { label: 'Body Sales',             field: 'body_sales',            type: 'dollar' },
+    { label: 'Body Gross Profit',      field: 'body_gross_profit',     type: 'dollar' },
+    { label: 'Body GP %',              field: 'body_gp_pct',           type: 'pct'    },
+  ],
+  Parts: [
+    { label: 'Parts Sales',            field: 'parts_sales',           type: 'dollar' },
+    { label: 'Parts Gross Profit',     field: 'parts_gross_profit',    type: 'dollar' },
+    { label: 'Parts GP %',             field: 'parts_gp_pct',          type: 'pct'    },
+  ],
+}
 
-const SCOPE_TYPE_PILLS = ['Store', 'Department', 'Employee']
+const MONTH_PILLS = ['March 2026', 'April 2026', 'May 2026']
 
-// Derived at runtime from appData — see getScopePills() inside the component
+// ── Formatters ────────────────────────────────────────────────────────────────
 
-const ACTION_PILLS   = ['Use Recommended Target', 'Show Similar Stores', 'Set Custom Value']
-const CONFIRM_PILLS  = ['Yes, confirm recommended target', 'Set Custom Value']
+function fmtVal(type, val) {
+  const n = parseFloat(val)
+  if (isNaN(n)) return '—'
+  if (type === 'pct') return n.toFixed(1) + '%'
+  return '$' + Math.round(n).toLocaleString()
+}
 
-const SYSTEM_PROMPT = `You are GoalBot, an AI-powered goal assistant for retail store managers at SmartGoals.
-You help managers set data-driven performance goals for Store #042 in Chicago, IL.
+// ── System prompt ─────────────────────────────────────────────────────────────
 
-Available metrics: Revenue, Operating Cost, Footfall, Units Sold, Customer Satisfaction Score, Expense.
-Scope options: entire store, a department (e.g. Electronics), or an employee/manager.
+const SYSTEM_PROMPT = `You are GoalBot, an AI-powered Fixed Ops goal assistant for automotive dealership managers.
+You help managers set performance goals for Fixed Operations metrics: Service, Body, and Parts.
 
-Historical data:
-- Operating Cost: Jan $92,000 · Feb $89,500 · Mar $92,500 (avg $91,333) → recommend $86,766 (5% cut)
-- Revenue: Jan $128,000 · Feb $122,500 · Mar $131,000 (avg $127,167) → recommend $133,525 (5% growth)
-- Footfall: Jan 14,200 · Feb 13,800 · Mar 15,100 (avg 14,367) → recommend 15,085 (5% growth)
-- Units Sold: Jan 6,400 · Feb 6,100 · Mar 6,820 (avg 6,440) → recommend 6,762 (5% growth)
-- Customer Satisfaction: avg 4.2/5.0 → recommend 4.4/5.0
-- Expense: avg $58,000 → recommend $55,100 (5% cut)
+Available categories and metrics:
+- Service: Service Sales, Service Gross Profit, Service GP %
+- Body: Body Sales, Body Gross Profit, Body GP %
+- Parts: Parts Sales, Parts Gross Profit, Parts GP %
 
-YOUR ROLE IS STRICTLY TO ASK QUESTIONS — NOT TO SET GOALS OR SHOW DATA.
+Prediction months available: March 2026, April 2026, May 2026.
 
-The UI has buttons that handle all data display, recommendations, and goal confirmation.
+YOUR ROLE IS STRICTLY TO ASK CLARIFYING QUESTIONS — NOT TO SET GOALS OR SHOW DATA.
+The UI has buttons that handle all data display, predictions, and goal confirmation.
+
 You must NEVER:
 - Say a goal has been set, saved, confirmed, or created
-- Show historical data, averages, or recommended values
+- Show prediction values or raw data
 - Confirm or finalize anything
 
 You must ONLY:
-1. Ask which metric (if not provided)
-2. Ask which scope type: store, department, or employee (if not provided)
-3. If scope type is "department" but no specific department named, ask which one: Electronics, Apparel, Grocery, Home & Living, Sports, Beauty
-4. Once metric and specific scope are clear, say "Great! Please use the buttons below to select your target and we'll show you the data and recommended value."
+1. Ask which enterprise they are working with (if not selected via button)
+2. Ask which store (if not selected)
+3. Ask which category: Service, Body, or Parts (if not provided)
+4. Ask which specific metric within the category (e.g. "Body Gross Profit")
+5. Ask which prediction month: March 2026, April 2026, or May 2026
+6. Once all are clear: "Great! Please use the buttons below to view the prediction and confirm your goal."
 
-If the user says "yes", "ok", "proceed", "confirm", or anything affirmative WITHOUT having clicked a button yet, respond: "Please use the buttons below to select your specific target — that will trigger the data and recommendation for you."
-
-Revenue, Operating Cost, and Footfall are store/department metrics only — not for individual employees. If asked for an employee, explain this and suggest Units Sold or Customer Satisfaction Score instead.
-
-Be concise: 1-2 sentences max. Use **bold** for metric and scope names.`
-
-// ── Intent detection ──────────────────────────────────────────────────────────
-
-function detectIntent(text) {
-  const lower = text.toLowerCase()
-
-  const metricMap = [
-    { keys: ['revenue'], value: 'Revenue' },
-    { keys: ['operating cost', 'op cost'], value: 'Operating Cost' },
-    { keys: ['footfall', 'foot fall', 'traffic', 'visitors'], value: 'Footfall' },
-    { keys: ['units sold', 'units', 'sales volume'], value: 'Units Sold' },
-    { keys: ['customer satisfaction', 'satisfaction score', 'csat'], value: 'Customer Satisfaction' },
-    { keys: ['expense', 'expenses'], value: 'Expense' },
-  ]
-  const scopeMap = [
-    { keys: ['employee', 'staff', 'associate', 'worker'], value: 'employee' },
-    { keys: ['manager', 'sarah kim', 'sarah'], value: 'manager' },
-    { keys: ['department', 'dept', 'electronics', 'apparel', 'grocery'], value: 'department' },
-    { keys: ['store', 'entire store', 'whole store'], value: 'store' },
-  ]
-
-  let detectedMetric = null
-  let detectedScope = null
-
-  for (const { keys, value } of metricMap) {
-    if (keys.some(k => lower.includes(k))) { detectedMetric = value; break }
-  }
-  for (const { keys, value } of scopeMap) {
-    if (keys.some(k => lower.includes(k))) { detectedScope = value; break }
-  }
-
-  return { detectedMetric, detectedScope }
-}
+Be concise: 1-2 sentences max. Use **bold** for metric and category names.`
 
 // ── OpenAI helper ─────────────────────────────────────────────────────────────
 
@@ -97,7 +83,7 @@ async function callOpenAI(history) {
     body: JSON.stringify({
       messages: history,
       system_prompt: SYSTEM_PROMPT,
-      max_tokens: 200,
+      max_tokens: 150,
     }),
   })
   if (!res.ok) throw new Error(`Server error ${res.status}`)
@@ -123,148 +109,158 @@ function Bold({ text }) {
   })
 }
 
-function fmtVal(metric, val) {
-  const n = parseFloat(val)
-  if (isNaN(n)) return val ?? '—'
-  if (metric === 'Customer Satisfaction Score') return n.toFixed(2) + ' / 5.0'
-  if (metric === 'Footfall' || metric === 'Units Sold') return n.toLocaleString()
-  return '$' + n.toLocaleString()
-}
+function PredictionCard({ enterpriseId, storeId, metricConfig, month, data }) {
+  if (!data || !metricConfig || !month) return null
 
-function DataTable({ dataRow, metric }) {
-  // dataRow comes from CSV; fall back to placeholder if not found
-  const rows = dataRow
-    ? [
-        { label: 'Jan', value: fmtVal(metric, dataRow.jan), tag: 'historical' },
-        { label: 'Feb', value: fmtVal(metric, dataRow.feb), tag: 'historical' },
-        { label: 'Mar', value: fmtVal(metric, dataRow.mar), tag: 'historical' },
-        { label: '3-Month Avg', value: fmtVal(metric, dataRow.avg_3m), tag: 'avg' },
-        { label: 'Recommended Target', value: fmtVal(metric, dataRow.recommended_target), tag: 'recommended' },
-      ]
-    : [
-        { label: 'Jan', value: '$92.0K', tag: 'historical' },
-        { label: 'Feb', value: '$89.5K', tag: 'historical' },
-        { label: 'Mar', value: '$92.5K', tag: 'historical' },
-        { label: '3-Month Avg', value: '$91.3K', tag: 'avg' },
-        { label: 'Recommended Target', value: '$86.7K', tag: 'recommended' },
-      ]
+  const row = data.find(r =>
+    r.enterprise_id === enterpriseId &&
+    r.store_id === storeId &&
+    r.prediction_month === month
+  )
 
-  const title = dataRow
-    ? `${dataRow.entity_name} · ${metric || 'Metric'} — Q1 2025`
-    : 'Operating Cost — Q1 2025'
+  if (!row) return (
+    <div className="border border-amber-100 rounded-xl p-3 my-2 bg-amber-50 w-[300px]">
+      <p className="text-xs text-amber-700">No prediction data found for {storeId} · {month}</p>
+    </div>
+  )
+
+  const val = fmtVal(metricConfig.type, row[metricConfig.field])
 
   return (
     <div className="border border-gray-100 rounded-xl overflow-hidden my-2 w-[300px]">
       <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-100">
-        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{title}</p>
+        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+          {enterpriseId} · {storeId} · {metricConfig.label}
+        </p>
+        <p className="text-[10px] text-gray-400 mt-0.5">{month} Prediction</p>
       </div>
-      {rows.map((row, i) => (
-        <div key={i} className={`flex items-center justify-between px-4 py-2.5 ${i < rows.length - 1 ? 'border-b border-gray-50' : ''} ${row.tag === 'recommended' ? 'bg-teal-50' : ''}`}>
-          <span className={`text-sm ${row.tag === 'recommended' ? 'font-semibold text-teal-700' : 'text-gray-600'}`}>{row.label}</span>
-          <span className={`text-sm font-bold ${row.tag === 'recommended' ? 'text-teal-700' : row.tag === 'avg' ? 'text-gray-900' : 'text-gray-500'}`}>{row.value}</span>
-        </div>
-      ))}
+      <div className="px-4 py-3 flex items-center justify-between">
+        <span className="text-sm text-gray-600">Predicted Value</span>
+        <span className="text-base font-bold text-teal-700">{val}</span>
+      </div>
+      <div className="px-4 py-2 border-t border-gray-50 flex items-center gap-2">
+        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+          row.confidence === 'High' ? 'bg-emerald-50 text-emerald-700' :
+          row.confidence === 'Medium' ? 'bg-amber-50 text-amber-700' :
+          'bg-red-50 text-red-600'
+        }`}>{row.confidence} Confidence</span>
+        <span className="text-[11px] text-gray-400">{row.store_size} Store</span>
+      </div>
     </div>
   )
 }
 
-function ComparisonTable() {
+function SimilarStoresCard({ enterpriseId, storeId, metricConfig, month, data }) {
+  if (!data || !metricConfig || !month) return null
+
+  // Find the current store's size to match similar stores
+  const currentRow = data.find(r => r.enterprise_id === enterpriseId && r.store_id === storeId && r.prediction_month === month)
+  const storeSize = currentRow?.store_size
+
+  // Get all stores of the same size across all enterprises, excluding the current store
+  const similarRows = data
+    .filter(r =>
+      r.prediction_month === month &&
+      r.store_id !== storeId &&
+      r.store_size === storeSize
+    )
+    .map(r => ({
+      enterpriseId: r.enterprise_id,
+      storeId: r.store_id,
+      storeSize: r.store_size,
+      confidence: r.confidence,
+      value: parseFloat(r[metricConfig.field]),
+    }))
+    .filter(r => !isNaN(r.value))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6)
+
+  if (similarRows.length === 0) return (
+    <div className="border border-amber-100 rounded-xl p-3 my-2 bg-amber-50 w-[340px]">
+      <p className="text-xs text-amber-700">No similar stores found for {storeSize} size in {month}.</p>
+    </div>
+  )
+
+  const currentVal = currentRow ? parseFloat(currentRow[metricConfig.field]) : null
+
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden my-2">
+    <div className="border border-gray-100 rounded-xl overflow-hidden my-2 w-[340px]">
       <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-100">
-        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Similar Stores Comparison</p>
+        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+          Similar {storeSize} Stores · {metricConfig.label}
+        </p>
+        <p className="text-[10px] text-gray-400 mt-0.5">{month} · sorted by predicted value</p>
       </div>
-      {SIMILAR_STORES.map((store, i) => (
-        <div key={store.id} className={`flex items-center gap-3 px-4 py-3 ${i < SIMILAR_STORES.length - 1 ? 'border-b border-gray-50' : ''}`}>
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 flex-shrink-0">#{store.id}</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-800 leading-tight">{store.name}</p>
-            <p className="text-xs text-gray-400">{store.location}</p>
+
+      {/* Header row */}
+      <div className="grid bg-gray-50 border-b border-gray-100" style={{ gridTemplateColumns: '1fr 1fr 1.2fr 0.8fr' }}>
+        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Enterprise</div>
+        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Store</div>
+        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide text-right">Predicted</div>
+        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide text-right">Conf.</div>
+      </div>
+
+      {/* Current store row */}
+      {currentRow && (
+        <div className="grid items-center bg-teal-50 border-b border-teal-100" style={{ gridTemplateColumns: '1fr 1fr 1.2fr 0.8fr' }}>
+          <div className="px-3 py-2 text-xs font-medium text-teal-700">{enterpriseId}</div>
+          <div className="px-3 py-2 text-xs font-bold text-teal-800 flex items-center gap-1">
+            {storeId}
+            <span className="text-[9px] bg-teal-200 text-teal-800 px-1 rounded font-semibold">YOU</span>
           </div>
-          <span className="text-sm font-bold text-gray-900">{store.value}</span>
+          <div className="px-3 py-2 text-xs font-bold text-teal-700 text-right tabular-nums">
+            {fmtVal(metricConfig.type, currentVal)}
+          </div>
+          <div className="px-3 py-2 text-right">
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+              currentRow.confidence === 'High' ? 'bg-emerald-100 text-emerald-700' :
+              currentRow.confidence === 'Medium' ? 'bg-amber-100 text-amber-700' :
+              'bg-red-100 text-red-600'
+            }`}>{currentRow.confidence}</span>
+          </div>
         </div>
-      ))}
+      )}
+
+      {/* Similar store rows */}
+      {similarRows.map((r, i) => {
+        const isAbove = currentVal !== null && r.value > currentVal
+        return (
+          <div key={r.storeId} className={`grid items-center border-b border-gray-50 last:border-0 ${i % 2 === 1 ? 'bg-gray-50/40' : 'bg-white'}`}
+            style={{ gridTemplateColumns: '1fr 1fr 1.2fr 0.8fr' }}>
+            <div className="px-3 py-2 text-xs text-gray-500">{r.enterpriseId}</div>
+            <div className="px-3 py-2 text-xs font-medium text-gray-700">{r.storeId}</div>
+            <div className="px-3 py-2 text-xs font-semibold text-gray-800 text-right tabular-nums flex items-center justify-end gap-1">
+              {currentVal !== null && (
+                <span className={`text-[9px] ${isAbove ? 'text-emerald-500' : 'text-red-400'}`}>
+                  {isAbove ? '↑' : '↓'}
+                </span>
+              )}
+              {fmtVal(metricConfig.type, r.value)}
+            </div>
+            <div className="px-3 py-2 text-right">
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                r.confidence === 'High' ? 'bg-emerald-100 text-emerald-700' :
+                r.confidence === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                'bg-red-100 text-red-600'
+              }`}>{r.confidence}</span>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
 
-function SuccessBanner({ metric, entityName, value }) {
+function SuccessBanner({ metric, storeId, month, value }) {
   return (
-    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 my-1">
+    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 my-1 w-[300px]">
       <div className="flex items-center gap-2 mb-1.5">
         <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">✓</div>
         <p className="text-sm font-bold text-emerald-800">Goal set successfully!</p>
       </div>
       <p className="text-sm text-emerald-700 leading-relaxed">
-        <strong>{metric ?? 'Goal'}</strong> target of <strong>{value ?? '—'}</strong> is now active for <strong>{entityName ?? 'entity'}</strong> — March 2025.
+        <strong>{metric}</strong> target of <strong>{value}</strong> is now active for <strong>{storeId}</strong> — {month}.
       </p>
-    </div>
-  )
-}
-
-function TargetDropdown({ options, scopeType, disabled, onConfirm }) {
-  const [selected, setSelected] = React.useState(options[0] ?? '')
-  const label = { store: 'Select a store', department: 'Select a department', employee: 'Select an employee' }[scopeType] ?? 'Select target'
-
-  return (
-    <div className="ml-9 mt-1 mb-3 flex flex-col gap-2 max-w-[300px]">
-      <p className="text-xs text-gray-500">{label}</p>
-      <select
-        value={selected}
-        onChange={(e) => setSelected(e.target.value)}
-        disabled={disabled}
-        className="text-sm border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50 bg-white cursor-pointer transition-all disabled:opacity-50"
-      >
-        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-      <button
-        onClick={() => onConfirm(selected)}
-        disabled={disabled}
-        className="self-start text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-xl px-4 py-2 transition-colors disabled:opacity-40"
-      >
-        Confirm Selection
-      </button>
-    </div>
-  )
-}
-
-function CustomValueInput({ metric, recommendedValue, onConfirm, onCancel }) {
-  const [val, setVal] = React.useState('')
-  const placeholder = recommendedValue ? `e.g. ${recommendedValue} (recommended)` : 'Enter a number'
-
-  function handleConfirm() {
-    const n = parseFloat(String(val).replace(/[^0-9.]/g, ''))
-    if (isNaN(n) || n <= 0) return
-    onConfirm(n)
-  }
-
-  return (
-    <div className="ml-9 mt-1 mb-3 flex flex-col gap-2 max-w-[300px]">
-      <p className="text-xs text-gray-500">Enter your custom target for <strong>{metric}</strong>:</p>
-      <input
-        type="number"
-        value={val}
-        onChange={e => setVal(e.target.value)}
-        placeholder={placeholder}
-        className="text-sm border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50 transition-all"
-        onKeyDown={e => e.key === 'Enter' && handleConfirm()}
-        autoFocus
-      />
-      <div className="flex gap-2">
-        <button
-          onClick={handleConfirm}
-          disabled={!val}
-          className="flex-1 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-xl px-4 py-2 transition-colors disabled:opacity-40"
-        >
-          Confirm Value
-        </button>
-        <button
-          onClick={onCancel}
-          className="text-sm font-medium text-gray-500 border border-gray-200 rounded-xl px-4 py-2 hover:bg-gray-50 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
     </div>
   )
 }
@@ -296,11 +292,32 @@ function BotMessage({ msg }) {
             <Bold text={msg.content} />
           </div>
         )}
-        {msg.type === 'barchart' && <DataTable dataRow={msg.dataRow} metric={msg.metric} />}
-        {msg.type === 'comparison' && (
-          <div className="bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 w-[300px]"><ComparisonTable /></div>
+        {msg.type === 'prediction' && (
+          <PredictionCard
+            enterpriseId={msg.enterpriseId}
+            storeId={msg.storeId}
+            metricConfig={msg.metricConfig}
+            month={msg.month}
+            data={msg.data}
+          />
         )}
-        {msg.type === 'success' && <div className="w-[300px]"><SuccessBanner metric={msg.metric} entityName={msg.entityName} value={msg.value} /></div>}
+        {msg.type === 'similar' && (
+          <SimilarStoresCard
+            enterpriseId={msg.enterpriseId}
+            storeId={msg.storeId}
+            metricConfig={msg.metricConfig}
+            month={msg.month}
+            data={msg.data}
+          />
+        )}
+        {msg.type === 'success' && (
+          <SuccessBanner
+            metric={msg.metric}
+            storeId={msg.storeId}
+            month={msg.month}
+            value={msg.value}
+          />
+        )}
       </div>
     </div>
   )
@@ -328,192 +345,263 @@ function PillButton({ label, onClick, disabled }) {
   )
 }
 
-// ── Main ChatPanel ────────────────────────────────────────────────────────────
+function CustomValueInput({ metricConfig, predictedValue, onConfirm, onCancel }) {
+  const [val, setVal] = React.useState('')
+
+  function handleConfirm() {
+    const n = parseFloat(String(val).replace(/[^0-9.]/g, ''))
+    if (isNaN(n) || n <= 0) return
+    onConfirm(n)
+  }
+
+  return (
+    <div className="ml-9 mt-1 mb-3 flex flex-col gap-2 max-w-[300px]">
+      <p className="text-xs text-gray-500">Enter your custom target for <strong>{metricConfig?.label}</strong>:</p>
+      <input
+        type="number"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        placeholder={predictedValue ? `e.g. ${predictedValue} (predicted)` : 'Enter a number'}
+        className="text-sm border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50 transition-all"
+        onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+        autoFocus
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={handleConfirm}
+          disabled={!val}
+          className="flex-1 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-xl px-4 py-2 transition-colors disabled:opacity-40"
+        >
+          Confirm Value
+        </button>
+        <button
+          onClick={onCancel}
+          className="text-sm font-medium text-gray-500 border border-gray-200 rounded-xl px-4 py-2 hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
+// 0 = enterprise, 1 = store, 2 = category, 3 = metric, 4 = month, 5 = confirm, 6 = done
 
 const INITIAL_MESSAGES = [
   {
     role: 'bot',
     type: 'text',
-    content: "Hi! I'm **GoalBot**, your AI-powered goal assistant. I'll help you set smart, data-backed performance targets for Store #042.\n\nWhich metric would you like to set a goal for this month?",
+    content: "Hi! I'm **GoalBot**, your Fixed Ops goal assistant.\n\nLet's start — which **Enterprise** would you like to set a goal for?",
   },
 ]
 
-// Map pill label → CSV metric name
-const METRIC_PILL_TO_CSV = {
-  'Revenue': 'Revenue',
-  'Operating Cost': 'Operating Cost',
-  'Footfall': 'Footfall',
-  'Units Sold': 'Units Sold',
-  'Customer Satisfaction': 'Customer Satisfaction Score',
-  'Expense': 'Expense',
-}
-
-export default function ChatPanel({ onGoalCreated, appData }) {
+export default function ChatPanel({ onGoalCreated }) {
   const [messages, setMessages] = useState(INITIAL_MESSAGES)
   const [step, setStep] = useState(0)
-  const [scopeType, setScopeType] = useState(null) // null | 'store' | 'department' | 'employee'
-  const [selectedMetric, setSelectedMetric] = useState(null)   // CSV metric name
-  const [selectedEntityId, setSelectedEntityId] = useState(null) // entity_id from CSV
-  const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [pillsDisabled, setPillsDisabled] = useState(false)
   const [apiError, setApiError] = useState(null)
   const [customValueMode, setCustomValueMode] = useState(false)
+  const [inputValue, setInputValue] = useState('')
+
+  // Selections
+  const [selectedEnterprise, setSelectedEnterprise] = useState(null)
+  const [selectedStore, setSelectedStore] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState(null) // 'Service'|'Body'|'Parts'
+  const [selectedMetricConfig, setSelectedMetricConfig] = useState(null) // { label, field, type }
+  const [selectedMonth, setSelectedMonth] = useState(null)
+
+  // Fixed ops data (data.csv)
+  const [fixedOpsData, setFixedOpsData] = useState([])
+
   const bottomRef = useRef(null)
   const gptHistory = useRef([])
+
+  useEffect(() => {
+    fetch('/data/data.csv')
+      .then(r => r.text())
+      .then(text => setFixedOpsData(parseCSV(text)))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
-  async function getBotReply(userText, nextStep, injectVisuals = false, entityId = null, metricName = null) {
-    // Show user message immediately — don't wait for API
-    setMessages(prev => [...prev, { role: 'user', content: userText }])
+  // Derived options
+  const enterprises = [...new Set(fixedOpsData.map(r => r.enterprise_id))].sort()
+  const storesForEnterprise = selectedEnterprise
+    ? [...new Set(fixedOpsData.filter(r => r.enterprise_id === selectedEnterprise).map(r => r.store_id))].sort()
+    : []
+
+  async function getBotReply(userText) {
     gptHistory.current.push({ role: 'user', content: userText })
     setIsLoading(true)
     setApiError(null)
     try {
       const reply = await callOpenAI(gptHistory.current)
       gptHistory.current.push({ role: 'assistant', content: reply })
-
-      const newBotMsgs = [{ role: 'bot', type: 'text', content: reply }]
-      if (injectVisuals) {
-        if (nextStep === 2) {
-          // Look up real CSV data row
-          const eId = entityId ?? selectedEntityId
-          const mName = metricName ?? selectedMetric
-          const eType = scopeType ?? 'store'
-          const dataRow = appData?.getMetricRow?.(eType, eId, mName) ?? null
-          newBotMsgs.push({ role: 'bot', type: 'barchart', dataRow, metric: mName })
-        }
-        if (nextStep === 3) newBotMsgs.push({ role: 'bot', type: 'comparison' })
-        if (nextStep === 4) {
-          const eId2 = entityId ?? selectedEntityId
-          const mName2 = metricName ?? selectedMetric
-          const eType2 = scopeType ?? 'store'
-          const row2 = appData?.getMetricRow?.(eType2, eId2, mName2) ?? null
-          newBotMsgs.push({
-            role: 'bot', type: 'success',
-            metric: mName2,
-            entityName: row2?.entity_name ?? eId2,
-            value: row2 ? fmtVal(mName2, row2.recommended_target) : '—',
-          })
-        }
-      }
-
-      setMessages(prev => [...prev, ...newBotMsgs])
-    } catch (err) {
+      setMessages(prev => [...prev, { role: 'bot', type: 'text', content: reply }])
+    } catch {
       setApiError('Could not reach the chat service. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
+  function addUserMessage(text) {
+    setMessages(prev => [...prev, { role: 'user', content: text }])
+  }
+
+  function addBotMessage(msg) {
+    setMessages(prev => [...prev, { role: 'bot', ...msg }])
+  }
+
   async function handlePillClick(pill) {
     if (pillsDisabled || isLoading) return
     setPillsDisabled(true)
-
-    let nextStep = step
+    addUserMessage(pill)
 
     if (step === 0) {
-      // Metric selected → go to scope type selection
-      nextStep = 1
-      setSelectedMetric(METRIC_PILL_TO_CSV[pill] ?? pill)
-    } else if (step === 1 && scopeType === null) {
-      // Scope TYPE selected (Store / Department / Employee) → show specific options
-      const type = pill.toLowerCase()
-      setScopeType(type)
-      await getBotReply(pill, 1, false)
-      setPillsDisabled(false)
-      return // stay at step 1, pills will update to show specific options
-    } else if (step === 1 && scopeType !== null) {
-      // Specific target selected — extract entity_id from pill
-      // Pill format: "S001 — Downtown Flagship" or "Electronics" or "Sarah Kim — Store Manager"
-      const entityId = pill.includes(' — ') ? pill.split(' — ')[0].trim() : pill
-      setSelectedEntityId(entityId)
-      nextStep = 2
-      await getBotReply(pill, nextStep, true, entityId, selectedMetric)
-      setStep(nextStep)
-      setPillsDisabled(false)
-      return
+      // Enterprise selected
+      setSelectedEnterprise(pill)
+      setStep(1)
+      addBotMessage({ type: 'text', content: `Got it — **${pill}**. Which store would you like to set a goal for?` })
+      gptHistory.current.push({ role: 'user', content: pill })
+      gptHistory.current.push({ role: 'assistant', content: `Got it — ${pill}. Which store would you like to set a goal for?` })
+
+    } else if (step === 1) {
+      // Store selected
+      setSelectedStore(pill)
+      setStep(2)
+      addBotMessage({ type: 'text', content: `Great! Which **category** would you like to set a goal for — **Service**, **Body**, or **Parts**?` })
+      gptHistory.current.push({ role: 'user', content: pill })
+      gptHistory.current.push({ role: 'assistant', content: `Great! Which category would you like to set a goal for — Service, Body, or Parts?` })
+
     } else if (step === 2) {
-      if (pill === 'Set Custom Value') {
-        // Show inline input — don't advance step yet
-        setMessages(prev => [...prev, { role: 'user', content: pill }])
-        gptHistory.current.push({ role: 'user', content: pill })
-        setMessages(prev => [...prev, {
-          role: 'bot', type: 'text',
-          content: `Sure! What custom target value would you like to set for **${selectedMetric}**?`,
-        }])
-        setCustomValueMode(true)
-        setPillsDisabled(false)
-        return
-      }
-      nextStep = pill === 'Show Similar Stores' ? 3 : 4
+      // Category selected
+      setSelectedCategory(pill)
+      setStep(3)
+      const metrics = CATEGORY_METRICS[pill]
+      const metricNames = metrics.map(m => `**${m.label}**`).join(', ')
+      addBotMessage({ type: 'text', content: `Which **${pill}** metric? Choose from: ${metricNames}.` })
+      gptHistory.current.push({ role: 'user', content: pill })
+      gptHistory.current.push({ role: 'assistant', content: `Which ${pill} metric would you like to track?` })
+
     } else if (step === 3) {
-      nextStep = 4
+      // Metric selected
+      const category = selectedCategory
+      const metricConfig = CATEGORY_METRICS[category]?.find(m => m.label === pill)
+      setSelectedMetricConfig(metricConfig)
+      setStep(4)
+      addBotMessage({ type: 'text', content: `Which **prediction month** would you like to set the goal for?` })
+      gptHistory.current.push({ role: 'user', content: pill })
+      gptHistory.current.push({ role: 'assistant', content: 'Which prediction month would you like to use?' })
+
+    } else if (step === 4) {
+      // Month selected
+      setSelectedMonth(pill)
+      setStep(5)
+      // Show prediction card
+      addBotMessage({
+        type: 'prediction',
+        enterpriseId: selectedEnterprise,
+        storeId: selectedStore,
+        metricConfig: selectedMetricConfig,
+        month: pill,
+        data: fixedOpsData,
+      })
+      addBotMessage({
+        type: 'text',
+        content: `Here's the prediction for **${selectedMetricConfig?.label}** in **${pill}**. Would you like to use this as your goal, or set a custom value?`,
+      })
+      gptHistory.current.push({ role: 'user', content: pill })
+      gptHistory.current.push({ role: 'assistant', content: `Here's the prediction. Would you like to use it or set a custom value?` })
+
+    } else if (step === 5) {
+      if (pill === 'Show Similar Stores') {
+        addBotMessage({
+          type: 'similar',
+          enterpriseId: selectedEnterprise,
+          storeId: selectedStore,
+          metricConfig: selectedMetricConfig,
+          month: selectedMonth,
+          data: fixedOpsData,
+        })
+        addBotMessage({
+          type: 'text',
+          content: `Here are similar-sized stores and their **${selectedMetricConfig?.label}** predictions for **${selectedMonth}**. Ready to set your goal?`,
+        })
+        gptHistory.current.push({ role: 'user', content: pill })
+        gptHistory.current.push({ role: 'assistant', content: `Here are similar stores. Ready to set your goal?` })
+        // stay at step 5 so confirm pills remain
+
+      } else if (pill === 'Set Custom Value') {
+        addBotMessage({ type: 'text', content: `Sure! Enter your custom target for **${selectedMetricConfig?.label}**:` })
+        setCustomValueMode(true)
+        gptHistory.current.push({ role: 'user', content: pill })
+
+      } else if (pill === 'Use Predicted Value') {
+        // Find prediction value
+        const row = fixedOpsData.find(r =>
+          r.enterprise_id === selectedEnterprise &&
+          r.store_id === selectedStore &&
+          r.prediction_month === selectedMonth
+        )
+        const predictedVal = row ? parseFloat(row[selectedMetricConfig.field]) : null
+        confirmGoal(predictedVal)
+      }
     }
 
-    await getBotReply(pill, nextStep, true)
-    setStep(nextStep)
     setPillsDisabled(false)
-
-    if (nextStep === 4) {
-      confirmGoal(null) // null = use recommended target from CSV
-    }
   }
 
-  function confirmGoal(customValue) {
-    const eType = scopeType ?? 'store'
-    const eId = selectedEntityId
-    const mName = selectedMetric
-    const dataRow = appData?.getMetricRow?.(eType, eId, mName) ?? null
-    const recTarget = customValue ?? (dataRow ? parseFloat(dataRow.recommended_target) : null)
-    const avg3m = dataRow ? parseFloat(dataRow.avg_3m) : null
-    const changePct = recTarget && avg3m
-      ? parseFloat((((recTarget - avg3m) / avg3m) * 100).toFixed(1))
-      : 0
-    const formattedValue = fmtVal(mName, recTarget)
-    const entityName = dataRow?.entity_name ?? eId ?? 'Unknown'
+  function confirmGoal(value) {
+    const formatted = fmtVal(selectedMetricConfig?.type, value)
 
-    onGoalCreated({
-      metric: mName ?? 'Goal',
-      owner: entityName,
-      currentValue: formattedValue,
-      previousValue: dataRow ? fmtVal(mName, dataRow.avg_3m) : '—',
-      changePercent: changePct,
-      progress: 95,
-      month: 'March 2025',
-      entityType: eType,
-      entityId: eId,
-      csvMetric: mName,
-    })
-
-    // If custom value, update the recommended target in the data dashboard
-    if (customValue !== null && appData?.updateMetricTarget) {
-      appData.updateMetricTarget(eType, eId, mName, customValue)
+    // Find previous month's value for comparison
+    const prevMonthMap = {
+      'April 2026': 'March 2026',
+      'May 2026':   'April 2026',
     }
+    const prevMonth = prevMonthMap[selectedMonth] ?? null
+    const prevRow = prevMonth
+      ? fixedOpsData.find(r =>
+          r.enterprise_id === selectedEnterprise &&
+          r.store_id === selectedStore &&
+          r.prediction_month === prevMonth
+        )
+      : null
+    const prevRaw = prevRow ? parseFloat(prevRow[selectedMetricConfig?.field]) : null
+    const prevFormatted = prevRaw != null ? fmtVal(selectedMetricConfig?.type, prevRaw) : '—'
+    const changePct = (value != null && prevRaw != null && prevRaw !== 0)
+      ? parseFloat((((value - prevRaw) / prevRaw) * 100).toFixed(1))
+      : 0
 
-    return { formattedValue, entityName }
+    addBotMessage({
+      type: 'success',
+      metric: selectedMetricConfig?.label,
+      storeId: selectedStore,
+      month: selectedMonth,
+      value: formatted,
+    })
+    setStep(6)
+    onGoalCreated({
+      metric: selectedMetricConfig?.label ?? 'Goal',
+      owner: `${selectedEnterprise} — ${selectedStore}`,
+      currentValue: formatted,
+      previousValue: prevFormatted,
+      changePercent: changePct,
+      progress: 80,
+      month: selectedMonth,
+    })
   }
 
   async function handleCustomValueConfirm(numericValue) {
     setCustomValueMode(false)
-    const { formattedValue, entityName } = confirmGoal(numericValue)
-
-    // Show user message + success banner
-    setMessages(prev => [
-      ...prev,
-      { role: 'user', content: `My custom target: ${fmtVal(selectedMetric, numericValue)}` },
-      {
-        role: 'bot', type: 'success',
-        metric: selectedMetric,
-        entityName,
-        value: formattedValue,
-      },
-    ])
-    gptHistory.current.push({ role: 'user', content: `My custom target: ${fmtVal(selectedMetric, numericValue)}` })
-    setStep(4)
+    confirmGoal(numericValue)
+    gptHistory.current.push({ role: 'user', content: `Custom target: ${fmtVal(selectedMetricConfig?.type, numericValue)}` })
   }
 
   async function handleSend(e) {
@@ -522,47 +610,42 @@ export default function ChatPanel({ onGoalCreated, appData }) {
     if (!text || isLoading) return
     setInputValue('')
 
-    const { detectedMetric, detectedScope } = detectIntent(text)
-    let nextStep = step
-
-    if (step === 0 && detectedMetric) {
-      nextStep = 1
-      if (detectedScope) setScopeType(detectedScope)
-    } else if (step === 1 && detectedScope && scopeType === null) {
-      // User typed their scope type in free text
-      setScopeType(detectedScope)
+    // If typed text matches a current pill exactly (case-insensitive), treat it like a pill click
+    const matched = getCurrentPills().find(p => p.toLowerCase() === text.toLowerCase())
+    if (matched) {
+      await handlePillClick(matched)
+      return
     }
 
-    await getBotReply(text, nextStep)
-    setStep(nextStep)
+    // For step 2 (category), also match partial text like "service" → "Service"
+    if (step === 2) {
+      const catMatch = CATEGORY_PILLS.find(c => text.toLowerCase().includes(c.toLowerCase()))
+      if (catMatch) { await handlePillClick(catMatch); return }
+    }
+
+    // For step 3 (metric), partial match
+    if (step === 3 && selectedCategory) {
+      const metricMatch = CATEGORY_METRICS[selectedCategory]?.find(m =>
+        text.toLowerCase().includes(m.label.toLowerCase().split(' ')[0])
+      )
+      if (metricMatch) { await handlePillClick(metricMatch.label); return }
+    }
+
+    addUserMessage(text)
+    await getBotReply(text)
   }
 
-  // Build scope option lists from live appData
-  function getScopePills(type) {
-    if (!appData) return []
-    if (type === 'store')
-      return (appData.stores ?? []).map(s => `${s.store_id} — ${s.name}`)
-    if (type === 'department')
-      return (appData.departments ?? []).map(d => d.name)
-    if (type === 'employee')
-      return (appData.employees ?? []).map(e => `${e.employee_id} — ${e.name}`)
-    return []
-  }
-
-  // Compute pills dynamically based on step and detected scope
   function getCurrentPills() {
-    if (step === 0) return METRIC_PILLS
-    if (step === 1) {
-      if (scopeType === null) return SCOPE_TYPE_PILLS
-      return getScopePills(scopeType)
-    }
-    if (step === 2) return ACTION_PILLS
-    if (step === 3) return CONFIRM_PILLS
+    if (step === 0) return enterprises.length > 0 ? enterprises : []
+    if (step === 1) return storesForEnterprise
+    if (step === 2) return CATEGORY_PILLS
+    if (step === 3) return selectedCategory ? CATEGORY_METRICS[selectedCategory].map(m => m.label) : []
+    if (step === 4) return MONTH_PILLS
+    if (step === 5) return ['Use Predicted Value', 'Show Similar Stores', 'Set Custom Value']
     return []
   }
 
   const currentPills = getCurrentPills()
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -577,7 +660,7 @@ export default function ChatPanel({ onGoalCreated, appData }) {
             GoalBot
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
           </p>
-          <p className="text-[11px] text-gray-400">AI-Powered · GPT-4o-mini</p>
+          <p className="text-[11px] text-gray-400">Fixed Ops Goal Assistant · GPT-4o-mini</p>
         </div>
         {apiError && (
           <span className="text-[11px] text-red-500 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">⚠ API error</span>
@@ -594,33 +677,57 @@ export default function ChatPanel({ onGoalCreated, appData }) {
 
         {isLoading && <TypingIndicator />}
 
-        {/* Dropdown for specific store/dept/employee selection */}
-        {!isLoading && step === 1 && scopeType !== null && (
-          <TargetDropdown
-            options={getScopePills(scopeType)}
-            scopeType={scopeType}
-            disabled={pillsDisabled}
-            onConfirm={(selected) => handlePillClick(selected)}
-          />
-        )}
-
-        {/* Custom value input — shown after "Set Custom Value" is clicked */}
-        {!isLoading && customValueMode && step === 2 && (
+        {/* Custom value input */}
+        {!isLoading && customValueMode && step === 5 && (
           <CustomValueInput
-            metric={selectedMetric}
-            recommendedValue={(() => {
-              const row = appData?.getMetricRow?.(scopeType ?? 'store', selectedEntityId, selectedMetric)
-              return row ? fmtVal(selectedMetric, row.recommended_target) : null
+            metricConfig={selectedMetricConfig}
+            predictedValue={(() => {
+              const row = fixedOpsData.find(r =>
+                r.enterprise_id === selectedEnterprise &&
+                r.store_id === selectedStore &&
+                r.prediction_month === selectedMonth
+              )
+              return row ? fmtVal(selectedMetricConfig?.type, row[selectedMetricConfig?.field]) : null
             })()}
             onConfirm={handleCustomValueConfirm}
             onCancel={() => setCustomValueMode(false)}
           />
         )}
 
-        {/* Pill buttons for metric, scope type, and action steps */}
-        {!isLoading && !(step === 1 && scopeType !== null) && !customValueMode && currentPills.length > 0 && (
+        {/* Enterprise dropdown (step 0) */}
+        {!isLoading && !customValueMode && step === 0 && enterprises.length > 0 && (
+          <div className="ml-9 mt-1 mb-3 max-w-[260px]">
+            <select
+              defaultValue=""
+              disabled={pillsDisabled}
+              onChange={e => { if (e.target.value) handlePillClick(e.target.value) }}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50 bg-white cursor-pointer transition-all disabled:opacity-50"
+            >
+              <option value="" disabled>Select Enterprise ID...</option>
+              {enterprises.map(e => <option key={e} value={e}>{e}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Store dropdown (step 1) */}
+        {!isLoading && !customValueMode && step === 1 && storesForEnterprise.length > 0 && (
+          <div className="ml-9 mt-1 mb-3 max-w-[260px]">
+            <select
+              defaultValue=""
+              disabled={pillsDisabled}
+              onChange={e => { if (e.target.value) handlePillClick(e.target.value) }}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50 bg-white cursor-pointer transition-all disabled:opacity-50"
+            >
+              <option value="" disabled>Select Store ID...</option>
+              {storesForEnterprise.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Pill buttons (steps 2–5) */}
+        {!isLoading && !customValueMode && step >= 2 && currentPills.length > 0 && step < 6 && (
           <div className="flex flex-wrap gap-2 ml-9 mt-1 mb-3">
-            {currentPills.map((pill) => (
+            {currentPills.map(pill => (
               <PillButton key={pill} label={pill} onClick={() => handlePillClick(pill)} disabled={pillsDisabled || isLoading} />
             ))}
           </div>
@@ -632,13 +739,15 @@ export default function ChatPanel({ onGoalCreated, appData }) {
       {/* Footer */}
       <div className="flex-shrink-0 border-t border-gray-100 bg-white px-4 py-3">
         {apiError && <p className="text-[11px] text-red-500 text-center mb-1">{apiError}</p>}
-        <p className="text-[11px] text-gray-400 text-center mb-2">Goal will be previewed on the left as you configure it</p>
+        <p className="text-[11px] text-gray-400 text-center mb-2">
+          {step < 6 ? 'Use buttons above to navigate · or type a question' : 'Goal created! Check Active Goals on the left'}
+        </p>
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <input
             type="text"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={isLoading ? 'GoalBot is thinking...' : 'Type a message...'}
+            onChange={e => setInputValue(e.target.value)}
+            placeholder={isLoading ? 'GoalBot is thinking...' : 'Ask a question...'}
             disabled={isLoading}
             className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-full px-4 py-2 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-50 transition-all placeholder:text-gray-400 disabled:opacity-50"
           />

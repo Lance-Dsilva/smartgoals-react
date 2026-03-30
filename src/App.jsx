@@ -61,18 +61,7 @@ export default function App() {
       {/* ── Data Dashboard — always mounted, hidden when not active ── */}
       <div className={`flex flex-1 overflow-hidden p-4 ${activeTab === 'data' ? 'flex' : 'hidden'}`}>
         <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-          {appData.loading ? (
-            <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">Loading data...</div>
-          ) : appData.error ? (
-            <div className="flex-1 flex items-center justify-center text-red-400 text-sm">Error: {appData.error}</div>
-          ) : (
-            <DataPanel
-              stores={appData.stores}
-              departments={appData.departments}
-              employees={appData.employees}
-              metrics={appData.metrics}
-            />
-          )}
+          <DataPanel />
         </div>
       </div>
 
