@@ -33,7 +33,16 @@ const CATEGORY_METRICS = {
   ],
 }
 
-const MONTH_PILLS = ['March 2026', 'April 2026', 'May 2026']
+const MONTH_PILLS = ['2026-03-01', '2026-04-01', '2026-05-01']
+
+// Convert "2026-04-01" → "April 2026"
+function fmtMonth(dateStr) {
+  if (!dateStr) return dateStr
+  const [year, month] = dateStr.split('-')
+  const name = new Date(parseInt(year), parseInt(month) - 1, 1)
+    .toLocaleString('default', { month: 'long' })
+  return `${name} ${year}`
+}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -132,7 +141,7 @@ function PredictionCard({ enterpriseId, storeId, metricConfig, month, data }) {
         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
           {enterpriseId} · {storeId} · {metricConfig.label}
         </p>
-        <p className="text-[10px] text-gray-400 mt-0.5">{month} Prediction</p>
+        <p className="text-[10px] text-gray-400 mt-0.5">{fmtMonth(month)} Prediction</p>
       </div>
       <div className="px-4 py-3 flex items-center justify-between">
         <span className="text-sm text-gray-600">Predicted Value</span>
@@ -189,7 +198,7 @@ function SimilarStoresCard({ enterpriseId, storeId, metricConfig, month, data })
         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
           Similar {storeSize} Stores · {metricConfig.label}
         </p>
-        <p className="text-[10px] text-gray-400 mt-0.5">{month} · sorted by predicted value</p>
+        <p className="text-[10px] text-gray-400 mt-0.5">{fmtMonth(month)} · sorted by predicted value</p>
       </div>
 
       {/* Header row */}
@@ -259,7 +268,7 @@ function SuccessBanner({ metric, storeId, month, value }) {
         <p className="text-sm font-bold text-emerald-800">Goal set successfully!</p>
       </div>
       <p className="text-sm text-emerald-700 leading-relaxed">
-        <strong>{metric}</strong> target of <strong>{value}</strong> is now active for <strong>{storeId}</strong> — {month}.
+        <strong>{metric}</strong> target of <strong>{value}</strong> is now active for <strong>{storeId}</strong> — {fmtMonth(month)}.
       </p>
     </div>
   )
@@ -514,9 +523,9 @@ export default function ChatPanel({ onGoalCreated }) {
       })
       addBotMessage({
         type: 'text',
-        content: `Here's the prediction for **${selectedMetricConfig?.label}** in **${pill}**. Would you like to use this as your goal, or set a custom value?`,
+        content: `Here's the prediction for **${selectedMetricConfig?.label}** in **${fmtMonth(pill)}**. Would you like to use this as your goal, or set a custom value?`,
       })
-      gptHistory.current.push({ role: 'user', content: pill })
+      gptHistory.current.push({ role: 'user', content: fmtMonth(pill) })
       gptHistory.current.push({ role: 'assistant', content: `Here's the prediction. Would you like to use it or set a custom value?` })
 
     } else if (step === 5) {
@@ -531,7 +540,7 @@ export default function ChatPanel({ onGoalCreated }) {
         })
         addBotMessage({
           type: 'text',
-          content: `Here are similar-sized stores and their **${selectedMetricConfig?.label}** predictions for **${selectedMonth}**. Ready to set your goal?`,
+          content: `Here are similar-sized stores and their **${selectedMetricConfig?.label}** predictions for **${fmtMonth(selectedMonth)}**. Ready to set your goal?`,
         })
         gptHistory.current.push({ role: 'user', content: pill })
         gptHistory.current.push({ role: 'assistant', content: `Here are similar stores. Ready to set your goal?` })
@@ -562,8 +571,8 @@ export default function ChatPanel({ onGoalCreated }) {
 
     // Find previous month's value for comparison
     const prevMonthMap = {
-      'April 2026': 'March 2026',
-      'May 2026':   'April 2026',
+      '2026-04-01': '2026-03-01',
+      '2026-05-01': '2026-04-01',
     }
     const prevMonth = prevMonthMap[selectedMonth] ?? null
     const prevRow = prevMonth
@@ -594,7 +603,7 @@ export default function ChatPanel({ onGoalCreated }) {
       previousValue: prevFormatted,
       changePercent: changePct,
       progress: 80,
-      month: selectedMonth,
+      month: fmtMonth(selectedMonth),
     })
   }
 
@@ -728,7 +737,12 @@ export default function ChatPanel({ onGoalCreated }) {
         {!isLoading && !customValueMode && step >= 2 && currentPills.length > 0 && step < 6 && (
           <div className="flex flex-wrap gap-2 ml-9 mt-1 mb-3">
             {currentPills.map(pill => (
-              <PillButton key={pill} label={pill} onClick={() => handlePillClick(pill)} disabled={pillsDisabled || isLoading} />
+              <PillButton
+                key={pill}
+                label={step === 4 ? fmtMonth(pill) : pill}
+                onClick={() => handlePillClick(pill)}
+                disabled={pillsDisabled || isLoading}
+              />
             ))}
           </div>
         )}

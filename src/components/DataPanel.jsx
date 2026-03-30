@@ -9,6 +9,15 @@ function parseCSV(text) {
   })
 }
 
+// Convert "2026-04-01" → "April 2026"
+function fmtMonth(dateStr) {
+  if (!dateStr) return dateStr
+  const [year, month] = dateStr.split('-')
+  const name = new Date(parseInt(year), parseInt(month) - 1, 1)
+    .toLocaleString('default', { month: 'long' })
+  return `${name} ${year}`
+}
+
 function fmt$(val) {
   const n = parseFloat(val)
   if (isNaN(n)) return '—'
@@ -120,10 +129,10 @@ function TableHeader() {
     <div className="grid bg-[#4a5568] text-white rounded-t-xl overflow-hidden"
       style={{ gridTemplateColumns: '2.2fr 1fr 1fr 1fr 1fr 1fr' }}>
       <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider">Metric</div>
-      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">March 2026</div>
-      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">April 2026 Projection</div>
+      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">{fmtMonth('2026-03-01')}</div>
+      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">{fmtMonth('2026-04-01')} Projection</div>
       <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">Apr vs Mar</div>
-      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">May 2026 Projection</div>
+      <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">{fmtMonth('2026-05-01')} Projection</div>
       <div className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-right">May vs Apr</div>
     </div>
   )
@@ -167,9 +176,9 @@ export default function DataPanel() {
     return map
   }, [data, selectedEnterprise, selectedStore])
 
-  const marRow = rowByMonth['March 2026'] ?? null
-  const aprRow = rowByMonth['April 2026'] ?? null
-  const mayRow = rowByMonth['May 2026'] ?? null
+  const marRow = rowByMonth['2026-03-01'] ?? null
+  const aprRow = rowByMonth['2026-04-01'] ?? null
+  const mayRow = rowByMonth['2026-05-01'] ?? null
   const storeInfo = marRow ?? aprRow ?? mayRow
 
   const hasData = selectedEnterprise && selectedStore && (marRow || aprRow || mayRow)
