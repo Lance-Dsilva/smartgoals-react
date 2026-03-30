@@ -8,35 +8,35 @@ import { useAppData } from './data/useAppData'
 const INITIAL_GOALS = [
   {
     id: 1,
-    metric: 'Monthly Revenue',
-    owner: 'Store #042 — Chicago',
-    currentValue: '$128,000',
-    previousValue: '$122,500',
-    changePercent: 4.5,
+    metric: 'Service Sales',
+    owner: 'ENT001 — S001',
+    currentValue: '$924,224',
+    previousValue: '$888,065',
+    changePercent: 4.1,
     progress: 91,
-    month: 'March 2025',
+    month: 'April 2026',
     isNew: false,
   },
   {
     id: 2,
-    metric: 'Customer Footfall',
-    owner: 'Store #042 — Chicago',
-    currentValue: '3,400 visits',
-    previousValue: '3,150 visits',
-    changePercent: 7.9,
+    metric: 'Parts Gross Profit',
+    owner: 'ENT001 — S005',
+    currentValue: '$390,207',
+    previousValue: '$378,300',
+    changePercent: 3.1,
     progress: 85,
-    month: 'March 2025',
+    month: 'April 2026',
     isNew: false,
   },
   {
     id: 3,
-    metric: 'Units Sold',
-    owner: 'Store #042 — Chicago',
-    currentValue: '6,820 units',
-    previousValue: '6,400 units',
-    changePercent: 6.6,
+    metric: 'Fixed Operating Profit',
+    owner: 'ENT001 — S001',
+    currentValue: '$554,960',
+    previousValue: '$520,000',
+    changePercent: 6.7,
     progress: 80,
-    month: 'March 2025',
+    month: 'April 2026',
     isNew: false,
   },
 ]
@@ -72,9 +72,9 @@ export default function App() {
           <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-50">
             <h2 className="text-sm font-bold text-gray-900">Active Goals</h2>
             <select className="text-xs text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5 outline-none bg-white cursor-pointer hover:border-gray-300 transition-colors">
-              <option>March 2025</option>
-              <option>April 2025</option>
-              <option>May 2025</option>
+              <option>April 2026</option>
+              <option>May 2026</option>
+              <option>June 2026</option>
             </select>
           </div>
           <div className="flex-1 overflow-y-auto p-4">

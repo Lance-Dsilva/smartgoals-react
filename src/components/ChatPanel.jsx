@@ -203,8 +203,8 @@ function SimilarStoresCard({ enterpriseId, storeId, metricConfig, month, data })
 
       {/* Header row */}
       <div className="grid bg-gray-50 border-b border-gray-100" style={{ gridTemplateColumns: '1fr 1fr 1.2fr 0.8fr' }}>
-        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Enterprise</div>
-        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Store</div>
+        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Group</div>
+        <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Location</div>
         <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide text-right">Predicted</div>
         <div className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wide text-right">Conf.</div>
       </div>
@@ -233,11 +233,13 @@ function SimilarStoresCard({ enterpriseId, storeId, metricConfig, month, data })
       {/* Similar store rows */}
       {similarRows.map((r, i) => {
         const isAbove = currentVal !== null && r.value > currentVal
+        const anonEnterprise = `Enterprise ${String.fromCharCode(65 + i)}`
+        const anonStore = `Store ${i + 1}`
         return (
           <div key={r.storeId} className={`grid items-center border-b border-gray-50 last:border-0 ${i % 2 === 1 ? 'bg-gray-50/40' : 'bg-white'}`}
             style={{ gridTemplateColumns: '1fr 1fr 1.2fr 0.8fr' }}>
-            <div className="px-3 py-2 text-xs text-gray-500">{r.enterpriseId}</div>
-            <div className="px-3 py-2 text-xs font-medium text-gray-700">{r.storeId}</div>
+            <div className="px-3 py-2 text-xs text-gray-400 italic">{anonEnterprise}</div>
+            <div className="px-3 py-2 text-xs font-medium text-gray-500 italic">{anonStore}</div>
             <div className="px-3 py-2 text-xs font-semibold text-gray-800 text-right tabular-nums flex items-center justify-end gap-1">
               {currentVal !== null && (
                 <span className={`text-[9px] ${isAbove ? 'text-emerald-500' : 'text-red-400'}`}>

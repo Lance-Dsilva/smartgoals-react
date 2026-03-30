@@ -8,8 +8,8 @@ export default function Navbar({ activeTab, onTabChange }) {
     <nav className="flex-shrink-0 flex items-center gap-8 px-6 h-[52px] bg-white border-b border-gray-100 z-10">
       {/* Logo */}
       <div className="flex items-center gap-2 min-w-[140px]">
-        <div className="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold">S</div>
-        <span className="text-sm font-bold text-gray-900 tracking-tight">SmartGoals</span>
+        <div className="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold">G</div>
+        <span className="text-sm font-bold text-gray-900 tracking-tight">Goal 2.0</span>
       </div>
 
       {/* Nav links */}
